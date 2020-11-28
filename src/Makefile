@@ -1,7 +1,7 @@
 CC = g++
 CCFLAGS = -Wall -g
 
-objects = es.o
+objects = es.o io.o
 
 edit : $(objects)
 	$(CC) $(CCFLAGS) -o es $(objects)
@@ -9,4 +9,4 @@ edit : $(objects)
 
 .PHONY : clean
 clean :
-	-rm edit $(objects) es
+	-rm $(objects) es
