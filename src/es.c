@@ -5,13 +5,12 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include "io.h"
+
 typedef uint16_t ui;
 
-
-void clear_con(void)
-{
-    system("clear");
-}
+struct winsize win;
+ui cursorx, cursory;
 
 int load_file(const char* fname)
 {
@@ -19,48 +18,86 @@ int load_file(const char* fname)
     return fd;
 }
 
-void render(int c)
+void write_char(ui cursrox, ui cursory, char c)
 {
-    struct winsize win;
+    
+}
 
-    // get win size and win width
+// get win size and win width
+void get_win_details(void)
+{
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &win);
+}
+
+void _putc(char c)
+{
+    printf("%c", c);
+}
+
+void con_putc(ui cursorx, ui cursory, char c)
+{
     ui winWidth = win.ws_col;
     ui winHeight = win.ws_row;
-    
+    int i;
+    // get to the correct row
+    for (i = 0; i < (cursory * winWidth); i++)
+    {
+        _putc(' ');
+    }
+    for (i = 0; i < cursorx; i++)
+    {
+        _putc(' ');
+    }
+    _putc(c);
+}
+
+void render(int c)
+{
+    ui winWidth = win.ws_col;
+    ui winHeight = win.ws_row;
     // print win height and width for starters
     printf("window width: %d\n", winWidth);
     printf("window height: %d\n", winHeight);
 
     int i;
-
-    for (i = 0; i<winWidth; i++)
+    for (i = 0; i < winWidth; i++)
     {
         printf("%c", c);
     }
 
     printf("%c", '\n');
 
-    for (i = 0; i<winWidth; i++)
+    for (i = 0; i < winWidth; i++)
     {
         printf("%c", c);
     }
-}
 
-int get_user_input(void)
-{
-    int c = getchar();
-    return c;
+    for (i = 0; i<3; i++)
+    {
+        printf("%c", ' ');
+    }
+
+    printf("%c", 'l');
 }
 
 int main(int argc, char* argv[])
 {
+    eliminate_stdio_buffering();
     clear_con();
+    get_win_details();
     int fd = load_file("/home/scwfri/tmp.txt");
     printf("Got fd: %d\n", fd);
 
+    char c = getchar();
+    //while (c != 'q')
+    //{
+    //    render(c);
+    //    c = getchar();
+    //}
 
-    int c = get_user_input();
-    printf("got char: %c", c);
-    render(c);
+    con_putc(10, 10, c);
+
+    c = getchar();
+
+    restore_stdio_buffering();
 }
