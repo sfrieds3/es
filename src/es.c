@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "io.h"
 
@@ -12,16 +13,14 @@ typedef uint16_t ui;
 
 struct winsize win;
 ui cursorx, cursory;
+ui visible_line;
+
+char* _bptr;
 
 int load_file(const char* fname)
 {
     int fd = open(fname, O_RDONLY);
     return fd;
-}
-
-void write_char(ui cursrox, ui cursory, char c)
-{
-    
 }
 
 // get win size and win width
@@ -30,11 +29,18 @@ void get_win_details(void)
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &win);
 }
 
-void _putc(char c)
+void set_buf_ptr()
 {
-    printf("%c", c);
+    _bptr = (char*)malloc(win.ws_col * win.ws_row);
+    memset((void*)_bptr, ' ', win.ws_col * win.ws_row);
 }
 
+void _putc(ui xpos, ui ypos, char c)
+{
+    *(_bptr + (xpos * ypos)) = c;
+}
+
+/*
 void con_putc_at_pos(ui cursorx, ui cursory, char c)
 {
     ui winWidth = win.ws_col;
@@ -51,40 +57,57 @@ void con_putc_at_pos(ui cursorx, ui cursory, char c)
     }
     _putc(c);
 }
+*/
 
-void con_putc(char c)
+void clear_buffer(ui winWidth, ui winHeight)
 {
-    _putc(c);
-    cursorx++;
+    int i, j;
+    for (i = 0; i < winHeight; i++)
+    {
+        for (j = 0; j < winWidth; j++)
+        {
+            putchar(' ');
+        }
+    }
 }
 
-void render(int c)
+void render_buffer()
 {
     ui winWidth = win.ws_col;
     ui winHeight = win.ws_row;
     // print win height and width for starters
-    printf("window width: %d\n", winWidth);
-    printf("window height: %d\n", winHeight);
+    //printf("window width: %d\n", winWidth);
+    //printf("window height: %d\n", winHeight);
 
-    int i;
-    for (i = 0; i < winWidth; i++)
+    clear_buffer(winWidth, winHeight);
+
+    int i, j;
+    // fill buffer with contents from _bptr
+    for (i = 0; i < winHeight; i++)
     {
-        printf("%c", c);
+        for (j = 0; j < winWidth; j++)
+        {
+            putchar(*(_bptr + (j * i)));
+        }
     }
+}
 
-    printf("%c", '\n');
+void process_char(char c)
+{
+    _putc(cursorx, cursory, c);
+    cursorx++;
+    render_buffer();
+}
 
-    for (i = 0; i < winWidth; i++)
-    {
-        printf("%c", c);
-    }
+void init_display(void)
+{
+    // init cursor position
+    cursorx = 1;
+    cursory = 1;
+    // init line
+    visible_line = 0;
 
-    for (i = 0; i<3; i++)
-    {
-        printf("%c", ' ');
-    }
-
-    printf("%c", 'l');
+    render_buffer();
 }
 
 int main(int argc, char* argv[])
@@ -92,10 +115,13 @@ int main(int argc, char* argv[])
     eliminate_stdio_buffering();
     clear_con();
     get_win_details();
-    cursorx = 0;
-    cursory = 0;
+    set_buf_ptr();
+    init_display();
+    // printf(_bptr);
+
+    // default cursor pos = (0, 0)
     int fd = load_file("/home/scwfri/tmp.txt");
-    printf("Got fd: %d\n", fd);
+    //printf("Got fd: %d\n", fd);
 
     char c = getchar();
     bool done = false;
@@ -108,10 +134,11 @@ int main(int argc, char* argv[])
                 done = true;
                 break;
             default:
-                con_putc(c);
+                process_char(c);
         }
         c = getchar();
     }
 
+    free(_bptr);
     restore_stdio_buffering();
 }
