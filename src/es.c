@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "io.h"
 
@@ -34,7 +35,7 @@ void _putc(char c)
     printf("%c", c);
 }
 
-void con_putc(ui cursorx, ui cursory, char c)
+void con_putc_at_pos(ui cursorx, ui cursory, char c)
 {
     ui winWidth = win.ws_col;
     ui winHeight = win.ws_row;
@@ -49,6 +50,12 @@ void con_putc(ui cursorx, ui cursory, char c)
         _putc(' ');
     }
     _putc(c);
+}
+
+void con_putc(char c)
+{
+    _putc(c);
+    cursorx++;
 }
 
 void render(int c)
@@ -85,19 +92,26 @@ int main(int argc, char* argv[])
     eliminate_stdio_buffering();
     clear_con();
     get_win_details();
+    cursorx = 0;
+    cursory = 0;
     int fd = load_file("/home/scwfri/tmp.txt");
     printf("Got fd: %d\n", fd);
 
     char c = getchar();
-    //while (c != 'q')
-    //{
-    //    render(c);
-    //    c = getchar();
-    //}
+    bool done = false;
 
-    con_putc(10, 10, c);
-
-    c = getchar();
+    while (!done)
+    {
+        switch (c)
+        {
+            case ':':
+                done = true;
+                break;
+            default:
+                con_putc(c);
+        }
+        c = getchar();
+    }
 
     restore_stdio_buffering();
 }
