@@ -29,7 +29,7 @@ void get_win_details(void)
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &win);
 }
 
-void set_buf_ptr()
+void init_bptr()
 {
     _bptr = (char*)malloc(win.ws_col * win.ws_row);
     memset((void*)_bptr, ' ', win.ws_col * win.ws_row);
@@ -61,6 +61,7 @@ void con_putc_at_pos(ui cursorx, ui cursory, char c)
 
 void clear_buffer(ui winWidth, ui winHeight)
 {
+    fflush(stdout);
     int i, j;
     for (i = 0; i < winHeight; i++)
     {
@@ -115,7 +116,7 @@ int main(int argc, char* argv[])
     eliminate_stdio_buffering();
     clear_con();
     get_win_details();
-    set_buf_ptr();
+    init_bptr();
     init_display();
     // printf(_bptr);
 
