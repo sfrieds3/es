@@ -16,6 +16,7 @@ ui cursorx, cursory;
 ui visible_line;
 
 char* _bptr;
+char* _bloc;
 
 int load_file(const char* fname)
 {
@@ -32,30 +33,33 @@ void get_win_details(void)
 void init_bptr()
 {
     _bptr = (char*)malloc(win.ws_col * win.ws_row);
+    _bloc = _bptr;
     memset((void*)_bptr, ' ', win.ws_col * win.ws_row);
 }
 
 void _putc(ui xpos, ui ypos, char c)
 {
-    *(_bptr + (xpos * ypos)) = c;
+    // *(_bptr) = c;
+    *_bptr = c;
+    _bptr += 1;
 }
 
 /*
-void con_putc_at_pos(ui cursorx, ui cursory, char c)
+   void con_putc_at_pos(ui cursorx, ui cursory, char c)
+   {
+   ui winWidth = win.ws_col;
+   ui winHeight = win.ws_row;
+   int i;
+// get to the correct row
+for (i = 0; i < (cursory * winWidth); i++)
 {
-    ui winWidth = win.ws_col;
-    ui winHeight = win.ws_row;
-    int i;
-    // get to the correct row
-    for (i = 0; i < (cursory * winWidth); i++)
-    {
-        _putc(' ');
-    }
-    for (i = 0; i < cursorx; i++)
-    {
-        _putc(' ');
-    }
-    _putc(c);
+_putc(' ');
+}
+for (i = 0; i < cursorx; i++)
+{
+_putc(' ');
+}
+_putc(c);
 }
 */
 
@@ -83,14 +87,20 @@ void render_buffer()
     clear_buffer(winWidth, winHeight);
 
     int i, j;
-    // fill buffer with contents from _bptr
-    for (i = 0; i < winHeight; i++)
+    char *c = _bloc;
+    while (c <= _bptr)
     {
-        for (j = 0; j < winWidth; j++)
-        {
-            putchar(*(_bptr + (j * i)));
-        }
+        putchar(*c);
+        c++;
     }
+    // fill buffer with contents from _bptr
+    //for (i = 0; i < winHeight; i++)
+    //{
+    //    for (j = 0; j < winWidth; j++)
+    //    {
+    //        putchar(*(_bptr + (j * i)));
+    //    }
+    //}
 }
 
 void process_char(char c)
