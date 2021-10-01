@@ -90,7 +90,7 @@ void render_buffer()
     char *c = _bloc;
     while (c <= _bptr)
     {
-        putchar(*c);
+        printf("%c", *c);
         c++;
     }
     // fill buffer with contents from _bptr
@@ -119,6 +119,11 @@ void init_display(void)
     visible_line = 0;
 
     render_buffer();
+}
+
+void cleanup_buff()
+{
+    free(_bloc);
 }
 
 int main(int argc, char* argv[])
@@ -150,6 +155,6 @@ int main(int argc, char* argv[])
         c = getchar();
     }
 
-    free(_bptr);
+    cleanup_buff();
     restore_stdio_buffering();
 }
